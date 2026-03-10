@@ -15,7 +15,7 @@ st.title("🚲 Bike Sharing Data Analytics Dashboard")
 st.markdown("**Proyek Analisis Data: Bike Sharing Dataset**")
 
 # ==============================
-# 2. LOAD & STANDARDIZE DATA (ANTI-ERROR)
+# 2. LOAD & STANDARDIZE DATA
 # ==============================
 @st.cache_data
 def load_data():
@@ -23,7 +23,7 @@ def load_data():
     file_path = os.path.join(current_dir, "main_data.csv")
     main_df = pd.read_csv(file_path)
     
-    # 1. Standarisasi nama kolom otomatis
+    # Standarisasi nama kolom otomatis
     rename_dict = {}
     if 'dteday' in main_df.columns: rename_dict['dteday'] = 'date'
     if 'hr' in main_df.columns: rename_dict['hr'] = 'hour'
@@ -31,17 +31,15 @@ def load_data():
     if 'cnt' in main_df.columns: rename_dict['cnt'] = 'total_count'
     main_df.rename(columns=rename_dict, inplace=True)
     
-    # 2. Standarisasi isi data (Mapping otomatis jika masih berupa angka)
+    # Standarisasi isi data
     if main_df['workingday'].dtype in ['int64', 'float64', 'int32']:
         main_df['workingday'] = main_df['workingday'].map({0: 'Holiday/Weekend', 1: 'Working Day'})
         
     if main_df['weather_condition'].dtype in ['int64', 'float64', 'int32']:
         main_df['weather_condition'] = main_df['weather_condition'].map({1: 'Clear', 2: 'Mist/Cloudy', 3: 'Light Snow/Rain', 4: 'Heavy Rain'})
     
-    # Memastikan format tanggal
     main_df['date'] = pd.to_datetime(main_df['date'])
     
-    # Bining untuk Clustering Suhu 
     bins = [0, 0.25, 0.50, 0.75, 1.0]
     labels = ['Dingin (Cold)', 'Sejuk (Mild)', 'Hangat (Warm)', 'Panas (Hot)']
     main_df['temp_cluster'] = pd.cut(main_df['temp'], bins=bins, labels=labels, include_lowest=True)
@@ -56,22 +54,30 @@ main_df = load_data()
 st.sidebar.title("🚴‍♂️ Navigasi Data")
 st.sidebar.markdown("Gunakan filter di bawah untuk mengeksplorasi data.")
 
-min_date = main_df["date"].min()
-max_date = main_df["date"].max()
+# Pastikan menggunakan format .date() agar kalender rapi
+min_date = main_df["date"].min().date()
+max_date = main_df["date"].max().date()
 
-# PENANGANAN ERROR TANGGAL: Menggunakan variabel penampung sementara
-date_range = st.sidebar.date_input(
-    label="Rentang Waktu",
-    min_value=min_date,
-    max_value=max_date,
-    value=[min_date, max_date]
-)
+# PERUBAHAN: Memecah input tanggal menjadi dua bagian terpisah
+col1, col2 = st.sidebar.columns(2)
+with col1:
+    start_date = st.date_input(
+        label="Tanggal Mulai",
+        min_value=min_date,
+        max_value=max_date,
+        value=min_date
+    )
+with col2:
+    end_date = st.date_input(
+        label="Tanggal Akhir",
+        min_value=min_date,
+        max_value=max_date,
+        value=max_date
+    )
 
-# Mengecek apakah user sudah memilih 2 tanggal (awal dan akhir)
-if len(date_range) == 2:
-    start_date, end_date = date_range
-else:
-    start_date = end_date = date_range[0]
+# Validasi ringan jika pengguna terbalik memasukkan tanggal
+if start_date > end_date:
+    st.sidebar.error("Error: Tanggal Akhir harus sesudah Tanggal Mulai.")
 
 # Memfilter dataset berdasarkan input sidebar
 filtered_df = main_df[(main_df["date"] >= pd.to_datetime(start_date)) & 
@@ -93,10 +99,8 @@ tab1, tab2, tab3 = st.tabs(["🕒 Pola Jam Sibuk (Q1)", "⛈️ Dampak Cuaca (Q2
 with tab1:
     st.header("Perbandingan Jam Sibuk: Hari Kerja vs Akhir Pekan")
     
-    # SUDAH DIGANTI MENJADI 'hour'
     hourly_trend = filtered_df.groupby(['workingday', 'hour'])[['casual', 'registered']].mean().reset_index()
     
-    # Cek apakah data kosong setelah difilter
     if hourly_trend.empty:
         st.warning("Data tidak tersedia untuk rentang tanggal ini.")
     else:
@@ -130,7 +134,6 @@ with tab2:
     st.header("Dampak Cuaca Terhadap Penyewaan di Jam Komuter")
     
     commuter_hours = [7, 8, 9, 17, 18, 19]
-    # SUDAH DIGANTI MENJADI 'hour'
     commuter_data = filtered_df[(filtered_df['hour'].isin(commuter_hours)) & (filtered_df['workingday'] == 'Working Day')]
     
     if commuter_data.empty:
