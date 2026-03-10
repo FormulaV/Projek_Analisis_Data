@@ -142,7 +142,7 @@ with tab2:
         weather_impact = commuter_data.groupby('weather_condition')['registered'].mean().reset_index().sort_values(by='registered', ascending=False)
         
         fig2, ax2 = plt.subplots(figsize=(10, 5))
-        sns.barplot(x='weather_condition', y='registered', data=weather_impact, palette='viridis', ax=ax2)
+        sns.barplot(x='weather_condition', y='registered', data=weather_impact, palette='Blues', ax=ax2)
         ax2.set_title('Rata-rata Penyewaan (Registered) per Kondisi Cuaca di Jam Komuter', fontsize=14)
         ax2.set_xlabel('Kondisi Cuaca')
         ax2.set_ylabel('Rata-rata Penyewaan')
