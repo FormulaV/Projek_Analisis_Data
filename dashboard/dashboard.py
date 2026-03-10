@@ -142,7 +142,7 @@ with tab2:
         weather_impact = commuter_data.groupby('weather_condition')['registered'].mean().reset_index().sort_values(by='registered', ascending=False)
         
         fig2, ax2 = plt.subplots(figsize=(10, 5))
-        sns.barplot(x='weather_condition', y='registered', data=weather_impact, palette='Blues', ax=ax2)
+        sns.barplot(x='weather_condition', y='registered', data=weather_impact, palette='Blues', hue='weather_condition', legend=False, ax=ax2)
         ax2.set_title('Rata-rata Penyewaan (Registered) per Kondisi Cuaca di Jam Komuter', fontsize=14)
         ax2.set_xlabel('Kondisi Cuaca')
         ax2.set_ylabel('Rata-rata Penyewaan')
@@ -156,14 +156,14 @@ with tab2:
 with tab3:
     st.header("Clustering Manual: Tingkat Kenyamanan Suhu Udara")
     
-    cluster_summary = filtered_df.groupby('temp_cluster')[['casual', 'registered', 'total_count']].mean().reset_index()
+    cluster_summary = filtered_df.groupby('temp_cluster', observed=False)[['casual', 'registered', 'total_count']].mean().reset_index()
     
     if cluster_summary.empty:
         st.warning("Data tidak tersedia untuk rentang tanggal ini.")
     else:
         fig3, axes3 = plt.subplots(nrows=1, ncols=2, figsize=(15, 6))
         
-        sns.barplot(x='temp_cluster', y='total_count', data=cluster_summary, palette='coolwarm', ax=axes3[0])
+        sns.barplot(x='temp_cluster', y='total_count', data=cluster_summary, palette='coolwarm', hue='temp_cluster', legend=False, ax=axes3[0])
         axes3[0].set_title('Total Penyewaan per Cluster Suhu', fontsize=14)
         axes3[0].set_xlabel('Cluster Suhu')
         axes3[0].set_ylabel('Total Penyewaan')
